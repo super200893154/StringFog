@@ -113,6 +113,21 @@ dependencies {
 }
 ```
 
+##### 兼容性说明
+
+**支持的 Android Gradle Plugin (AGP) 版本：7.2+ 至 9.x**
+
+- AGP 7.2 - 8.x：通过 `BaseExtension` 兼容路径
+- AGP 9.x（newDsl=true）：通过 `CommonExtension` 新 DSL 兼容路径
+- 最低 Gradle 版本：8.0
+- 最低 JDK 版本：11
+
+**关于 `android.newDsl` 属性**
+
+从 AGP 9.0 开始，可以通过 `gradle.properties` 设置 `android.newDsl=true` 启用新 DSL。
+本插件已自动支持此模式，无需额外配置。
+注意：`android.newDsl=false` 仅在 AGP 9.x 中作为临时兼容选项，AGP 10.0 将移除该属性。
+
 ##### 注意事项
 从AGP 8.0开始，默认不生成BuildConfig，但是StringFog依赖此配置，请注意加上下面的配置。
 ```kotlin
