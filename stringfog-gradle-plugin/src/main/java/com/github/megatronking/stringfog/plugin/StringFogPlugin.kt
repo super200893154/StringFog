@@ -1,16 +1,14 @@
 package com.github.megatronking.stringfog.plugin
 
+import com.android.build.api.dsl.CommonExtension
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.api.variant.AndroidComponentsExtension
-import com.android.build.gradle.AppExtension
 import com.android.build.gradle.BaseExtension
-import com.android.build.gradle.LibraryExtension
 import groovy.xml.XmlParser
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.configurationcache.extensions.capitalized
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
@@ -21,25 +19,18 @@ class StringFogPlugin : Plugin<Project> {
         private const val PLUGIN_NAME = "stringfog"
     }
 
-    private fun forEachVariant(
-        extension: BaseExtension,
-        action: (com.android.build.gradle.api.BaseVariant) -> Unit
-    ) {
-        when (extension) {
-            is AppExtension -> extension.applicationVariants.all(action)
-            is LibraryExtension -> {
-                extension.libraryVariants.all(action)
-            } else -> throw GradleException(
-                "StringFog plugin must be used with android app," +
-                        "library or feature plugin"
-            )
-        }
-    }
-
     override fun apply(project: Project) {
         project.extensions.create(PLUGIN_NAME, StringFogExtension::class.java)
-        val extension = project.extensions.findByType(BaseExtension::class.java)
-            ?: throw GradleException("StringFog plugin must be used with android plugin")
+
+        // Try new DSL first (AGP 9+ with newDsl=true), fallback to old BaseExtension (AGP 8.x)
+        val commonExtension = project.extensions.findByType(CommonExtension::class.java)
+        val baseExtension = project.extensions.findByType(BaseExtension::class.java)
+        if (commonExtension == null && baseExtension == null) {
+            throw GradleException("StringFog plugin must be used with android plugin")
+        }
+
+        // Resolve namespace from whichever extension is available
+        val namespace: String? = commonExtension?.namespace ?: baseExtension?.namespace
 
         val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
         androidComponents.onVariants { variant ->
@@ -65,7 +56,7 @@ class StringFogPlugin : Plugin<Project> {
                 applicationId = parsedManifest.attribute("package")?.toString()
             }
             if (applicationId.isNullOrEmpty()) {
-                applicationId = extension.namespace
+                applicationId = namespace
             }
             if (applicationId.isNullOrEmpty()) {
                 applicationId = stringfog.packageName
@@ -90,21 +81,23 @@ class StringFogPlugin : Plugin<Project> {
                 FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS
             )
 
-            // TODO This will not work on Gradle 9.0
-            forEachVariant(extension) {
-                val generateTaskName = "generateStringFog${it.name.capitalized()}"
-                if (project.getTasksByName(generateTaskName, true).isNotEmpty()) {
-                    return@forEachVariant
-                }
-                val stringfogDir = File(project.buildDir, "generated" +
-                        File.separatorChar + "source" + File.separatorChar + "stringFog" + File.separatorChar + it.name.capitalized().lowercase())
+            // Register source generation using Gradle 9+ compatible API
+            val generateTaskName = "generateStringFog${variant.name.replaceFirstChar { it.uppercaseChar() }}"
+            if (project.getTasksByName(generateTaskName, true).isEmpty()) {
+                val stringfogDir = project.layout.buildDirectory.dir(
+                    "generated/source/stringFog/${variant.name.lowercase()}"
+                )
                 val provider = project.tasks.register(generateTaskName, SourceGeneratingTask::class.java) { task ->
-                    task.genDir.set(stringfogDir)
+                    task.outputDir.set(stringfogDir)
                     task.applicationId.set(applicationId)
                     task.implementation.set(stringfog.implementation)
                     task.mode.set(stringfog.mode)
                 }
-                it.registerJavaGeneratingTask(provider, stringfogDir)
+                // Add generated source directory to variant's java sources
+                variant.sources.java?.addGeneratedSourceDirectory(
+                    provider,
+                    SourceGeneratingTask::outputDir
+                )
             }
             // TODO Need a final task to write logs to file
 //            val printFile = File(project.buildDir, "outputs/mapping/${variant.name.lowercase()}/stringfog.txt")
