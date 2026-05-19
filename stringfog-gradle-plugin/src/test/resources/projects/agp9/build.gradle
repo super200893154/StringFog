@@ -1,0 +1,34 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id 'com.android.application' version '9.1.1' apply false
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'stringfog'
+
+android {
+    namespace "com.test.stringfog"
+    compileSdk 35
+    defaultConfig {
+        applicationId "com.test.stringfog"
+        minSdk 21
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+    }
+    buildFeatures {
+        buildConfig = true
+    }
+}
+
+stringfog {
+    implementation 'com.github.megatronking.stringfog.xor.StringFogImpl'
+    enable true
+}

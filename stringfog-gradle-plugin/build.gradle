@@ -3,12 +3,23 @@ plugins {
     id "org.jetbrains.kotlin.jvm" version "1.8.21"
 }
 
+repositories {
+    google()
+    maven { url 'https://maven.aliyun.com/repository/central' }
+    maven { url 'https://maven.aliyun.com/repository/google' }
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    mavenLocal()
+}
+
 dependencies {
     implementation gradleApi()
     implementation localGroovy()
-    implementation 'com.android.tools.build:gradle:8.0.0'
+    compileOnly 'com.android.tools.build:gradle:8.0.0'
     implementation project(':stringfog-core')
     implementation project(':stringfog-interface')
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation gradleTestKit()
 }
 
 sourceSets {
@@ -18,6 +29,14 @@ sourceSets {
         }
         resources {
             srcDir 'src/main/resources'
+        }
+    }
+    test {
+        java {
+            srcDir 'src/test/java'
+        }
+        resources {
+            srcDir 'src/test/resources'
         }
     }
 }
@@ -36,6 +55,24 @@ tasks {
     compileKotlin {
         kotlinOptions.jvmTarget = targetCompatibility
     }
+    compileTestKotlin {
+        kotlinOptions.jvmTarget = targetCompatibility
+    }
+}
+
+// Generate plugin-classpath.txt for Gradle TestKit functional tests
+task createPluginClasspathFile() {
+    def outputDir = file("${buildDir}/resources/test")
+    inputs.files(sourceSets.main.runtimeClasspath)
+    outputs.dir(outputDir)
+    doLast {
+        outputDir.mkdirs()
+        file("${outputDir}/plugin-classpath.txt").text = sourceSets.main.runtimeClasspath.join('\n')
+    }
+}
+
+test {
+    dependsOn(createPluginClasspathFile)
 }
 
 apply from: '../maven_local.gradle'
