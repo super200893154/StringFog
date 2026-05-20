@@ -49,7 +49,7 @@ buildscript {
     }
     dependencies {
         ...
-        classpath 'com.github.super200893154.StringFog:gradle-plugin:5.3.0'
+        classpath 'com.github.super200893154.StringFog:gradle-plugin:5.3.1'
         // 选用加解密算法库，默认实现了xor算法，也可以使用自己的加解密库。
         classpath 'com.github.super200893154.StringFog:xor:5.0.0'
     }
