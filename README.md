@@ -1,18 +1,17 @@
 
-# StringFog
-一款自动对dex/aar/jar文件中的字符串进行加密Android插件工具，正如名字所言，给字符串加上一层雾霭，使人难以窥视其真面目。
+# StringFog (Fork - AGP 9.x Compatible)
 
-- 支持java/kotlin。
-- 支持app打包生成的apk加密。
-- 支持aar和jar等库文件加密。
+一款自动对 dex/aar/jar 文件中的字符串进行加密的 Android 插件工具，正如名字所言，给字符串加上一层雾霭，使人难以窥视其真面目。
+
+- 支持 Java/Kotlin。
+- 支持 app 打包生成的 apk 加密。
+- 支持 aar 和 jar 等库文件加密。
 - 支持加解密算法的自主扩展。
 - 支持配置可选代码加密。
-- 完全Gradle自动化集成。
-- 不支持InstantRun。
+- 完全 Gradle 自动化集成。
+- 不支持 InstantRun。
 
-**一些提示**
-> 由于我目前主要精力在[Reqable](https://reqable.com)创业项目上，StringFog的Issue处理没那么及时，非常抱歉！
-虽然我已经很久不从事Android项目的开发，但是还是会尽力将StringFog一直维护下去，如果您发现了一些可以修复的问题，欢迎提交PR。
+> 本仓库是基于 [MegatronKing/StringFog](https://github.com/MegatronKing/StringFog) 的 fork 版本，适配了 **AGP 9.x (android.newDsl=true)** 和 **Gradle 9.x** 的最新 API 变更。
 
 ### 原理
 
@@ -26,7 +25,6 @@ String a = "This is a string!";
 - 加密后：
 ```java
 String a = StringFog.decrypt(new byte[]{-113, 71...}, new byte[]{-23, 53});
-
 ```
 
 - 运行时：
@@ -35,62 +33,68 @@ decrypt: new byte[]{-113, 71...} => "This is a string!"
 ```
 
 ### 混淆
-StringFog和混淆完全不冲突，也不需要配置反混淆，实际上StringFog配上混淆效果会更好！
+
+StringFog 和混淆完全不冲突，也不需要配置反混淆，实际上 StringFog 配上混淆效果会更好！
 
 ### 使用
-由于开发了gradle插件，所以在集成时非常简单，不会影响到打包的配置。插件已经上传到MavenCentral，直接引用依赖就可以。
-**jcenter已经废弃，3.0+版本取消发布**
 
-##### 1、在根目录build.gradle中引入插件依赖。
+本 fork 版本通过 **JitPack** 发布，使用前请先确保项目中配置了 JitPack 仓库。
+
+##### 1、在根目录 build.gradle 中引入插件依赖。
+
 ```groovy
 buildscript {
     repositories {
         mavenCentral()
+        maven { url 'https://jitpack.io' }   // 必须添加 JitPack 仓库
     }
     dependencies {
         ...
         classpath 'com.github.super200893154.StringFog:gradle-plugin:5.3.1'
-        // 选用加解密算法库，默认实现了xor算法，也可以使用自己的加解密库。
-        classpath 'com.github.super200893154.StringFog:xor:5.0.0'
+        // 选用加解密算法库，默认实现了 xor 算法，也可以使用自己的加解密库。
+        classpath 'com.github.super200893154.StringFog:xor:5.3.1'
     }
 }
 ```
 
-##### 2、在app或lib的build.gradle中配置插件。
+> **注意**：JitPack 会将仓库所有模块以**同一个 tag 版本号**发布。因此 `gradle-plugin`、`xor` 等模块的版本号必须保持一致。
+
+##### 2、在 app 或 lib 的 build.gradle 中配置插件。
+
 ```groovy
 apply plugin: 'stringfog'
 
-// 导入RandomKeyGenerator类，如果使用HardCodeKeyGenerator，更换下类名
+// 导入 RandomKeyGenerator 类，如果使用 HardCodeKeyGenerator，更换下类名
 import com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator
 import com.github.megatronking.stringfog.plugin.StringFogMode
 
 stringfog {
     // 必要：加解密库的实现类路径，需和上面配置的加解密算法库一致。
     implementation 'com.github.megatronking.stringfog.xor.StringFogImpl'
-    // 可选：StringFog会自动尝试获取packageName，如果遇到获取失败的情况，可以显式地指定。
-    packageName 'com.github.megatronking.stringfog.app'
+    // 可选：StringFog 会自动尝试获取 packageName，如果遇到获取失败的情况，可以显式地指定。
+    packageName 'com.your.package.name'
     // 可选：加密开关，默认开启。
     enable true
     // 可选：指定需加密的代码包路径，可配置多个，未指定将默认全部加密。
     fogPackages = ['com.xxx.xxx']
-    // 可选（3.0版本新增）：指定密钥生成器，默认使用长度8的随机密钥（每个字符串均有不同随机密钥）,
+    // 可选：指定密钥生成器，默认使用长度8的随机密钥（每个字符串均有不同随机密钥），
     // 也可以指定一个固定的密钥：HardCodeKeyGenerator("This is a key")
     kg new RandomKeyGenerator()
-    // 可选（4.0版本新增）：用于控制字符串加密后在字节码中的存在形式, 默认为base64，
-    // 也可以使用text或者bytes
+    // 可选：用于控制字符串加密后在字节码中的存在形式，默认为 base64，
+    // 也可以使用 text 或者 bytes
     mode StringFogMode.base64
 }
 ```
 
-kts中配置参考
+KTS 中配置参考：
+
 ```kotlin
 plugins {
-    //...lib or application
+    // ...lib or application
     id("stringfog")
 }
-apply(plugin = "stringfog")
 
-configure<StringFogExtension> {
+configure<com.github.megatronking.stringfog.plugin.StringFogExtension> {
     // 必要：加解密库的实现类路径，需和上面配置的加解密算法库一致。
     implementation = "com.github.megatronking.stringfog.xor.StringFogImpl"
     // 可选：加密开关，默认开启。
@@ -98,69 +102,254 @@ configure<StringFogExtension> {
     // 可选：指定需加密的代码包路径，可配置多个，未指定将默认全部加密。
     // fogPackages = arrayOf("com.xxx.xxx")
     kg = com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator()
-    // base64或者bytes
+    // base64 或者 bytes
     mode = com.github.megatronking.stringfog.plugin.StringFogMode.bytes
 }
 ```
 
-##### 3、在app或lib的build.gradle中引入加解密库依赖。
+##### 3、在 app 或 lib 的 build.gradle 中引入加解密库依赖（运行时解密用）。
 
 ```groovy
 dependencies {
-      ...
-      // 这里要和上面选用的加解密算法库一致，用于运行时解密。
-      compile 'com.github.super200893154.StringFog:xor:5.0.0'
+    ...
+    // 这里要和上面选用的加解密算法库一致，用于运行时解密。
+    implementation 'com.github.super200893154.StringFog:xor:5.3.1'
 }
 ```
 
-**注意**: 如果使用此自定义版本，需要在 `settings.gradle` 或 `build.gradle` 中添加 JitPack 仓库：
-```groovy
-repositories {
-    maven { url 'https://jitpack.io' }
+### AGP 9.x (android.newDsl=true) 集成指南
+
+> **本插件的 v5.3.1 版本已适配 AGP 9.x 的新 DSL 和 Variant API。但消费端项目如果启用了 `android.newDsl=true`，还需要额外配置以下内容，否则会编译失败。**
+
+以下是在使用本插件 + AGP 9.x + `android.newDsl=true` 时可能遇到的问题及解决方案。
+
+#### 问题 1：Kotlin Android 插件冲突
+
+**错误信息：**
+```
+Cannot add extension with name 'kotlin', as there is an extension already registered with that name.
+```
+
+**原因：** AGP 9.x 内置了 Kotlin 支持（`android.builtInKotlin`），如果项目中**同时**显式声明了 `kotlin.android` 插件，会导致 `kotlin` 扩展被重复注册。
+
+**解决：**
+
+1. 在 `gradle.properties` 中启用 AGP 内置 Kotlin 支持：
+```properties
+android.builtInKotlin=true
+android.disallowKotlinSourceSets=false
+```
+
+2. **移除**所有模块 `build.gradle.kts` 中的 `kotlin.android` 插件声明：
+```kotlin
+// ❌ 移除：
+plugins {
+    alias(libs.plugins.kotlin.android)
 }
 ```
 
-##### 兼容性说明
+3. **同步移除**根 `build.gradle.kts` 中的 `apply false` 声明：
+```kotlin
+// ❌ 移除：
+alias(libs.plugins.kotlin.android) apply false
+```
 
-**支持的 Android Gradle Plugin (AGP) 版本：7.2+ 至 9.x**
+#### 问题 2：kotlinOptions 废弃
 
-- AGP 7.2+：通过 `CommonExtension` 与 `AndroidComponentsExtension` 新 Variant API 兼容路径
-- AGP 9.x（newDsl=true）：继续使用同一套新 DSL / Variant API 路径
-- 最低 Gradle 版本：8.0
-- 最低 JDK 版本：11
+**错误信息：**
+```
+'kotlinOptions' is deprecated
+```
 
-**关于 `android.newDsl` 属性**
+**原因：** 启用 `android.builtInKotlin=true` 后，旧的 `kotlinOptions {}` 块不再可用。
 
-从 AGP 9.0 开始，可以通过 `gradle.properties` 设置 `android.newDsl=true` 启用新 DSL。
-本插件已自动支持此模式，无需额外配置。
-注意：`android.newDsl=false` 仅在 AGP 9.x 中作为临时兼容选项，AGP 10.0 将移除该属性。
-本插件适配的是插件侧 Android Gradle Plugin API；消费项目中的 KSP、KAPT 等代码生成链路无需为 StringFog 适配而移除。
+**解决：** 将 `kotlinOptions` 替换为 `kotlin { compilerOptions {} }`：
 
-##### 注意事项
-从AGP 8.0开始，默认不生成BuildConfig，但是StringFog依赖此配置，请注意加上下面的配置。
+```kotlin
+// ❌ 旧的写法：
+android {
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+// ✅ 新的写法（放在 android 块外部或内部均可）：
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+```
+
+#### 问题 3：composeOptions 冲突
+
+**错误信息：**
+```
+Could not get unknown property 'kotlinCompilerExtensionVersion'
+```
+
+**原因：** AGP 9.x 新 DSL 下，旧的 `composeOptions { kotlinCompilerExtensionVersion }` 配置方式不再兼容。
+
+**解决：** 移除 `composeOptions` 块，改用 Compose Compiler Gradle 插件方式声明。
+
+```kotlin
+// ❌ 移除：
+android {
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.15"
+    }
+}
+
+// ✅ 改为使用 Compose Compiler Gradle 插件（如果使用 Compose）：
+plugins {
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
+}
+```
+
+#### 问题 4：maven-publish 找不到 release 组件
+
+**错误信息：**
+```
+SoftwareComponent with name 'release' not found.
+```
+
+**原因：** AGP 9.x 需要显式声明要发布的 Android library variant。
+
+**解决：** 在 library 模块的 `android` 块中添加：
 ```kotlin
 android {
-    // 注意请加上此配置
+    publishing {
+        singleVariant("release")
+    }
+}
+```
+
+#### 问题 5：依赖冲突（旧版 StringFog interface）
+
+**错误信息：**
+```
+Duplicate class com.github.megatronking.stringfog.Base64 found in modules ...
+```
+
+**原因：** 如果项目中引用了第三方库（如自定义加解密库），该库仍然依赖旧版 Maven 坐标 `com.github.megatronking.stringfog:interface`，导致 class 冲突。
+
+**解决：** 在引用该依赖时 `exclude` 旧版 StringFog interface：
+```kotlin
+implementation("com.example:custom-lib:1.0.0") {
+    exclude(group = "com.github.megatronking.stringfog", module = "interface")
+}
+```
+
+或者将自定义加解密库升级，使其依赖本 fork 的 interface：
+```kotlin
+implementation("com.github.super200893154.StringFog:interface:5.3.1")
+```
+
+#### 完整的 gradle.properties 配置参考
+
+```properties
+# AGP 9.x new DSL
+android.newDsl=true
+
+# AGP 内置 Kotlin 支持（必须）
+android.builtInKotlin=true
+
+# 允许使用旧版 Kotlin sourceSet 配置
+android.disallowKotlinSourceSets=false
+
+# AGP 9.x 需要
+android.useAndroidX=true
+
+# BuildConfig（StringFog 依赖）
+android.defaults.buildfeatures.buildconfig=true
+```
+
+#### 完整的 app/build.gradle.kts 参考
+
+```kotlin
+plugins {
+    id("com.android.application")
+    // 注意：不要添加 id("org.jetbrains.kotlin.android")
+    id("stringfog")
+}
+
+android {
+    namespace = "com.your.app"
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "com.your.app"
+        minSdk = 26
+        targetSdk = 35
+    }
+
+    buildFeatures {
+        buildConfig = true   // StringFog 依赖 BuildConfig
+    }
+
+    // 不要使用 kotlinOptions，改用下面的方式：
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    implementation 'com.github.super200893154.StringFog:xor:5.3.1'
+}
+```
+
+#### 支持的 AGP 版本
+
+- **AGP 8.x**：完全兼容，无需额外配置。
+- **AGP 9.x (android.newDsl=true)**：兼容（需按上述指南配置）。
+- **最低 Gradle 版本**：8.0
+- **最低 JDK 版本**：11
+
+#### AGP 9.x 集成清单（快速检查）
+
+| 配置项 | 说明 | 必须 |
+|--------|------|------|
+| `android.builtInKotlin=true` | 启用内置Kotlin | ✅ |
+| `android.disallowKotlinSourceSets=false` | 允许旧版sourceSet | ✅ |
+| 移除 `kotlin.android` 插件 | 所有模块及根build.gradle | ✅ |
+| `kotlinOptions` → `kotlin { compilerOptions {} }` | 替换所有模块 | ✅ |
+| `buildFeatures { buildConfig = true }` | StringFog依赖 | ✅ |
+| `jitpack.io` 仓库 | 添加至buildscript和dependencyResolution | ✅ |
+| 依赖版本统一为 tag 版本 | 所有 StringFog 模块版本号一致 | ✅ |
+
+### 注意事项
+
+从 AGP 8.0 开始，默认不生成 BuildConfig，但是 StringFog 依赖此配置，请注意加上：
+
+```kotlin
+android {
     buildFeatures {
         buildConfig = true
     }
-    ...
 }
 ```
 
 ### 扩展
 
 #### 注解反加密
-如果开发者有不需要自动加密的类，可以使用注解StringFogIgnore来忽略：
+
+如果开发者有不需要自动加密的类，可以使用注解 `@StringFogIgnore` 来忽略：
+
 ```java
 @StringFogIgnore
 public class Test {
     ...
 }
 ```
+
 #### 自定义加解密算法实现
-实现IStringFog接口，参考stringfog-ext目录下面的xor算法实现。
-注意某些算法在不同平台上会有差异，可能出现在运行时无法正确解密的问题。如何集成请参考下方范例！
+
+实现 `IStringFog` 接口，参考 `stringfog-ext` 目录下面的 xor 算法实现。
+注意某些算法在不同平台上会有差异，可能出现在运行时无法正确解密的问题。
+
 ```java
 public final class StringFogImpl implements IStringFog {
 
@@ -177,99 +366,83 @@ public final class StringFogImpl implements IStringFog {
     @Override
     public boolean shouldFog(String data) {
         // 控制指定字符串是否加密
-        // 建议过滤掉不重要或者过长的字符串
         return true;
     }
 
 }
+```
 
+自定义加解密库的 module 需要依赖本 fork 的 interface：
+
+```kotlin
+dependencies {
+    implementation("com.github.super200893154.StringFog:interface:5.3.1")
+}
 ```
 
 #### 自定义密钥生成器
-实现IKeyGenerator接口，参考RandomKeyGenerator的实现。
 
-#### Mapping文件
-**注意⚠️：StringFog 5.x版本起有问题，已暂时停用此功能**
-加解密的字符串明文和暗文会自动生成mapping映射文件，位于outputs/mapping/stringfog.txt。
+实现 `IKeyGenerator` 接口，参考 `RandomKeyGenerator` 的实现。
 
-## 范例
-- 默认加解密算法集成，参考[sample1](https://github.com/MegatronKing/StringFog-Sample1)
-- 自定义加解密算法集成，参考[sample2](https://github.com/MegatronKing/StringFog-Sample2)
+### 通过 JitPack 发布
 
-## 更新日志
+本插件通过 [JitPack](https://jitpack.io) 发布，每次发布只需：
 
-### v5.2.0
-- 从ASM7升级到ASM9。
+1. 更新版本号：
+   - `stringfog-gradle-plugin/gradle.properties` 中的 `VERSION` 属性。
+
+2. 创建 tag 并推送：
+```bash
+git tag v<新版本号>
+git push origin v<新版本号>
+```
+
+3. JitPack 会自动构建。可在 [JitPack Build Status](https://jitpack.io/#super200893154/StringFog) 查看进度。
+
+> JitPack 会将仓库中**所有模块**以同一个 tag 版本号发布，无需单独发布每个模块。
+
+### 更新日志
+
+#### v5.3.1
+
+- **适配 AGP 9.x (android.newDsl=true)**：
+  - 将 `BaseExtension` 替换为 `CommonExtension`，兼容 AGP 9.x 新 DSL。
+  - 支持 `AndroidComponentsExtension` 新 Variant API。
+- **适配 Gradle 9.x**：使用兼容的 Task 注册和 SourceDirectorySet API。
+- **发布方式**：从 MavenCentral 迁移至 JitPack。
+- 详细集成指南见上方「AGP 9.x 集成指南」章节。
+
+#### v5.3.0（跳过的版本，JitPack 缓存问题）
+
+#### v5.2.0
+
+- 从 ASM7 升级到 ASM9。
 - 修复多模块配置问题。
 
-### v5.1.0
-- 修复获取无法获取packageName的问题。
-- 修复无法指定KeyGenerator的问题。
-- 优化生成StringFog.java文件的任务逻辑。
-- 暂时移除Mapping文件生成逻辑，可能导致无法删除的问题。
+#### v5.1.0
 
-### v5.0.0
-- 支持Gradle 8.0。
+- 修复获取无法获取 packageName 的问题。
+- 修复无法指定 KeyGenerator 的问题。
+- 优化生成 StringFog.java 文件的任务逻辑。
+- 暂时移除 Mapping 文件生成逻辑，可能导致无法删除的问题。
 
-### v4.0.1
-- 修复Base64 API版本兼容问题。
+#### v5.0.0
 
-### v4.0.0
-- 使用ASM7以支持Android 12。
-- 支持AGP(Android Gradle Plugin) 7.x版本。
-- DSL新增StringFogMode选项，用于控制字符串加密后在字节码中的存在形式，支持base64和bytes两种模式，默认使用base64。
-    - base64模式：将字符串加密后的字节序列使用base64编码，行为同1.x和2.x版本。
-    - bytes模式：将字符串加密后的字节序列直接呈现在字节码中，行为同3.x版本。
+- 支持 Gradle 8.0。
 
-### v3.0.0
-- 密文不再以String形式存在，改为直接字节数组，感谢PR #50。
-- 重构公开API相关代码（不兼容历史版本）。
-- 删除AES加密实现，考虑到存在bug和性能问题且意义不大。
-- xor算法移除base64编码。
-- 固定加密字符串key改为随机key，且提供IKeyGenerator接口支持自定义实现。
-- 插件依赖的ASM库由5.x升级到9.2。
+#### v4.0.1
 
-### v2.2.1
-- 修复module-info类导致的报错问题
+- 修复 Base64 API 版本兼容问题。
 
-### v2.2.0
-- 支持AGP(Android Gradle Plugin) 3.3.0+版本
+#### v4.0.0
 
-### v2.1.0
-- 修复kotlin打包的bug
+- 使用 ASM7 以支持 Android 12。
+- 支持 AGP 7.x 版本。
+- 新增 `StringFogMode` 选项：base64 和 bytes。
 
-### v2.0.1
-- 增加implementation自定义算法实现类详细报错信息
+#### v3.0.0 及更早版本
 
-### v2.0.0
-- 修改gradle配置（必须配置implementation指定算法实现）。
-- 修复大字符串编译失败的问题。
-- 新增自定义加解密算法扩展。
-- 新增生成mapping映射表文件。
-
-### v1.4.1
-- 修复使用Java 8时出现的ZipException编译错误
-
-### v1.4.0
-- 新增指定包名加密的配置项：fogPackages
-- 移除指定包名不加密的配置项：exclude
-
-### v1.3.0
-- 修复gradle 3.0+编译报错的bug
-
-### v1.2.2
-- 修复windows下打包后报错的bug
-
-### v1.2.1
-- 修复windows下文件分隔符的bug
-- 修复applicationId和packageName不一致导致无法编译的bug
-- 优化功能，不需要再手动exclude已使用StringFog的库
-
-### v1.2.0
-- 支持在library中使用，每个library可以使用不同key
-- 支持exclude指定包名不进行加密
-- 修复一些已知bug
-
+见原始仓库 [MegatronKing/StringFog](https://github.com/MegatronKing/StringFog) 的更新日志。
 
 --------
 
