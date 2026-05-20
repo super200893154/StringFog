@@ -49,9 +49,9 @@ buildscript {
     }
     dependencies {
         ...
-        classpath 'com.github.megatronking.stringfog:gradle-plugin:5.2.0'
+        classpath 'com.github.super200893154.StringFog:gradle-plugin:5.3.0'
         // 选用加解密算法库，默认实现了xor算法，也可以使用自己的加解密库。
-        classpath 'com.github.megatronking.stringfog:xor:5.0.0'
+        classpath 'com.github.super200893154.StringFog:xor:5.0.0'
     }
 }
 ```
@@ -109,7 +109,14 @@ configure<StringFogExtension> {
 dependencies {
       ...
       // 这里要和上面选用的加解密算法库一致，用于运行时解密。
-      compile 'com.github.megatronking.stringfog:xor:5.0.0'
+      compile 'com.github.super200893154.StringFog:xor:5.0.0'
+}
+```
+
+**注意**: 如果使用此自定义版本，需要在 `settings.gradle` 或 `build.gradle` 中添加 JitPack 仓库：
+```groovy
+repositories {
+    maven { url 'https://jitpack.io' }
 }
 ```
 
@@ -117,8 +124,8 @@ dependencies {
 
 **支持的 Android Gradle Plugin (AGP) 版本：7.2+ 至 9.x**
 
-- AGP 7.2 - 8.x：通过 `BaseExtension` 兼容路径
-- AGP 9.x（newDsl=true）：通过 `CommonExtension` 新 DSL 兼容路径
+- AGP 7.2+：通过 `CommonExtension` 与 `AndroidComponentsExtension` 新 Variant API 兼容路径
+- AGP 9.x（newDsl=true）：继续使用同一套新 DSL / Variant API 路径
 - 最低 Gradle 版本：8.0
 - 最低 JDK 版本：11
 
@@ -127,6 +134,7 @@ dependencies {
 从 AGP 9.0 开始，可以通过 `gradle.properties` 设置 `android.newDsl=true` 启用新 DSL。
 本插件已自动支持此模式，无需额外配置。
 注意：`android.newDsl=false` 仅在 AGP 9.x 中作为临时兼容选项，AGP 10.0 将移除该属性。
+本插件适配的是插件侧 Android Gradle Plugin API；消费项目中的 KSP、KAPT 等代码生成链路无需为 StringFog 适配而移除。
 
 ##### 注意事项
 从AGP 8.0开始，默认不生成BuildConfig，但是StringFog依赖此配置，请注意加上下面的配置。

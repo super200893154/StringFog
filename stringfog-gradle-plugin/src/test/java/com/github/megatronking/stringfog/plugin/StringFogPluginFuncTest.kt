@@ -13,7 +13,7 @@ import java.nio.file.StandardCopyOption
 
 /**
  * Functional tests for StringFogPlugin using Gradle TestKit.
- * Verifies plugin behavior under AGP 8.x (legacy DSL) and AGP 9.x (new DSL) environments.
+ * Verifies plugin behavior under AGP 8.x and AGP 9.x using the Android Components APIs.
  */
 class StringFogPluginFuncTest {
 
@@ -34,7 +34,7 @@ class StringFogPluginFuncTest {
 
     /**
      * Test 1: AGP 8.x regression test.
-     * Verifies that the plugin applies successfully on AGP 8.0.0 (legacy BaseExtension DSL)
+     * Verifies that the plugin applies successfully on AGP 8.0.0 through CommonExtension
      * and the generateStringFog task is registered.
      */
     @Test
@@ -50,7 +50,7 @@ class StringFogPluginFuncTest {
             result.output.contains("generateStringFogDebug")
         )
 
-        // Verify no ClassCastException from BaseExtension
+        // Verify no ClassCastException from legacy Android extension APIs
         assertFalse(
             "Should not contain ClassCastException",
             result.output.contains("ClassCastException")
@@ -60,7 +60,7 @@ class StringFogPluginFuncTest {
     /**
      * Test 2: AGP 9.x new DSL test.
      * Verifies that the plugin applies successfully on AGP 9.1.1 with android.newDsl=true
-     * and does not throw BaseExtension cast exceptions.
+     * and does not throw legacy Android extension cast exceptions.
      */
     @Test
     fun testPluginAppliesOnAgp9NewDsl() {
@@ -75,7 +75,7 @@ class StringFogPluginFuncTest {
             result.output.contains("generateStringFogDebug")
         )
 
-        // Verify no ClassCastException from BaseExtension (critical for AGP 9.x new DSL)
+        // Verify no ClassCastException from legacy Android extension APIs (critical for AGP 9.x new DSL)
         assertFalse(
             "Should not contain ClassCastException (AGP 9.x new DSL compatibility)",
             result.output.contains("ClassCastException")

@@ -1,0 +1,4 @@
+jdk:
+  - openjdk17
+install:
+  - ./gradlew :stringfog-gradle-plugin:build :stringfog-core:build :stringfog-interface:build :stringfog-ext:xor:build publishToMavenLocal

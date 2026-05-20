@@ -4,12 +4,10 @@ import com.android.build.api.dsl.CommonExtension
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.api.variant.AndroidComponentsExtension
-import com.android.build.gradle.BaseExtension
 import groovy.xml.XmlParser
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
 
@@ -22,15 +20,12 @@ class StringFogPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.extensions.create(PLUGIN_NAME, StringFogExtension::class.java)
 
-        // Try new DSL first (AGP 9+ with newDsl=true), fallback to old BaseExtension (AGP 8.x)
         val commonExtension = project.extensions.findByType(CommonExtension::class.java)
-        val baseExtension = project.extensions.findByType(BaseExtension::class.java)
-        if (commonExtension == null && baseExtension == null) {
+        if (commonExtension == null) {
             throw GradleException("StringFog plugin must be used with android plugin")
         }
 
-        // Resolve namespace from whichever extension is available
-        val namespace: String? = commonExtension?.namespace ?: baseExtension?.namespace
+        val namespace: String? = commonExtension.namespace
 
         val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
         androidComponents.onVariants { variant ->
